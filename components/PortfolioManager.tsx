@@ -43,20 +43,20 @@ export default function PortfolioManager({ symbol, currentPrice }: PortfolioMana
     const marketValue = shares * currentPrice;
 
     return (
-        <div className="bg-white border border-zinc-100 rounded-xl p-8 mb-6 shadow-sm">
+        <div className="bg-white border border-slate-100 rounded-xl p-8 mb-6 shadow-sm dark:bg-slate-900 dark:border-slate-800 transition-colors">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div>
                     <div className="flex items-center gap-2 mb-2">
-                        <Briefcase size={16} className="text-zinc-400" />
-                        <h3 className="text-sm font-bold text-zinc-400 uppercase tracking-wider">Your Position</h3>
+                        <Briefcase size={16} className="text-slate-500 dark:text-slate-400" />
+                        <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider dark:text-slate-400">Your Position</h3>
                     </div>
                     <div className="flex items-baseline gap-4">
-                        <span className="text-4xl font-extrabold text-zinc-900">
-                            {shares.toLocaleString()} <span className="text-lg text-zinc-400 font-bold uppercase">Shares</span>
+                        <span className="text-4xl font-extrabold text-slate-900 dark:text-white">
+                            {shares.toLocaleString()} <span className="text-lg text-slate-500 font-bold uppercase dark:text-slate-400">Shares</span>
                         </span>
                         {shares > 0 && (
-                            <span className="text-zinc-500 font-medium">
-                                Value: <span className="text-zinc-900 font-bold">${marketValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                            <span className="text-slate-500 font-medium dark:text-slate-400">
+                                Value: <span className="text-slate-900 font-bold dark:text-slate-200">${marketValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                             </span>
                         )}
                     </div>
@@ -70,30 +70,30 @@ export default function PortfolioManager({ symbol, currentPrice }: PortfolioMana
                                 type="number"
                                 value={inputValue}
                                 onChange={(e) => setInputValue(e.target.value)}
-                                className="w-24 px-3 py-2 bg-zinc-50 border border-zinc-200 rounded-lg text-sm font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                className="w-24 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:border-slate-700 dark:text-white"
                                 placeholder="0.00"
                                 onKeyDown={(e) => e.key === "Enter" && handleSave()}
                             />
                             <button
                                 onClick={handleSave}
-                                className="bg-black text-white p-2 rounded-lg hover:bg-zinc-800 transition-colors"
+                                className="bg-slate-900 text-white p-2 rounded-lg hover:bg-slate-800 transition-colors dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200"
                             >
                                 <Check size={18} />
                             </button>
                         </div>
                     ) : (
                         <div className="flex items-center gap-3">
-                            <div className="flex border border-zinc-200 rounded-lg overflow-hidden font-sans">
+                            <div className="flex border border-slate-200 rounded-lg overflow-hidden font-sans dark:border-slate-700">
                                 <button
                                     onClick={() => handleQuickAdd(-1)}
                                     disabled={shares <= 0}
-                                    className="px-3 py-2 hover:bg-zinc-50 border-r border-zinc-200 disabled:opacity-20 transition-colors"
+                                    className="px-3 py-2 hover:bg-slate-50 border-r border-slate-200 disabled:opacity-20 transition-colors dark:hover:bg-slate-800 dark:border-slate-700 dark:text-slate-300"
                                 >
                                     <Minus size={16} />
                                 </button>
                                 <button
                                     onClick={() => handleQuickAdd(1)}
-                                    className="px-3 py-2 hover:bg-zinc-50 transition-colors"
+                                    className="px-3 py-2 hover:bg-slate-50 transition-colors dark:hover:bg-slate-800 dark:text-slate-300"
                                 >
                                     <Plus size={16} />
                                 </button>
@@ -104,7 +104,7 @@ export default function PortfolioManager({ symbol, currentPrice }: PortfolioMana
                                     setInputValue(shares.toString());
                                     setIsEditing(true);
                                 }}
-                                className="flex items-center gap-2 px-4 py-2 bg-zinc-50 hover:bg-zinc-100 text-zinc-900 text-sm font-bold rounded-lg border border-zinc-200 transition-colors"
+                                className="flex items-center gap-2 px-4 py-2 bg-slate-50 hover:bg-slate-100 text-slate-900 text-sm font-bold rounded-lg border border-slate-200 transition-colors dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-700"
                             >
                                 <Edit2 size={16} />
                                 <span>Edit</span>
