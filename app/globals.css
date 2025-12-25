@@ -22,22 +22,22 @@
   }
 
   body {
-    @apply bg-white text-slate-900 antialiased;
+    @apply bg-white text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100;
     font-feature-settings: "cv11", "ss01";
   }
 
   /* Fintech Typography Hierarchy */
   h1 {
-    @apply text-slate-900 font-bold tracking-tight;
+    @apply text-slate-900 font-bold tracking-tight dark:text-slate-50;
   }
 
   h2,
   h3 {
-    @apply text-slate-900 font-semibold tracking-tight;
+    @apply text-slate-900 font-semibold tracking-tight dark:text-slate-100;
   }
 
   p {
-    @apply text-slate-500 leading-relaxed;
+    @apply text-slate-500 leading-relaxed dark:text-slate-400;
   }
 }
 
@@ -48,17 +48,17 @@
 
   /* Production-grade Card */
   .fintech-card {
-    @apply bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all duration-300;
+    @apply bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all duration-300 dark:bg-slate-900 dark:border-slate-800 dark:shadow-slate-900/50;
   }
 
   /* Subtle Hero Input */
   .hero-input {
-    @apply w-full bg-white border border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-xl focus:outline-none focus:border-slate-400 focus:ring-4 focus:ring-slate-100 transition-all duration-200;
+    @apply w-full bg-white border border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-xl focus:outline-none focus:border-slate-400 focus:ring-4 focus:ring-slate-100 transition-all duration-200 dark:bg-slate-900 dark:border-slate-700 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-slate-500 dark:focus:ring-slate-800;
   }
 
   /* Primary Button */
   .btn-primary {
-    @apply bg-slate-900 text-white font-medium rounded-xl hover:bg-slate-800 active:scale-[0.98] transition-all shadow-sm shadow-slate-900/10;
+    @apply bg-slate-900 text-white font-medium rounded-xl hover:bg-slate-800 active:scale-[0.98] transition-all shadow-sm shadow-slate-900/10 dark:bg-slate-50 dark:text-slate-900 dark:hover:bg-slate-200;
   }
 }
 
@@ -72,5 +72,5 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-slate-200 rounded-full hover:bg-slate-300;
+  @apply bg-slate-200 rounded-full hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600;
 }

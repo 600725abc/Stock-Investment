@@ -54,7 +54,7 @@ export default async function StockPage({ params }: { params: Promise<{ ticker: 
     }
 
     return (
-        <div className="flex flex-col min-h-screen bg-zinc-50/30">
+        <div className="flex flex-col min-h-screen bg-slate-50/[0.3] dark:bg-slate-950 transition-colors">
             <Navbar />
 
             <main className="container-width py-12 mt-16 sm:mt-20">

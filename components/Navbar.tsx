@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 interface SearchResult {
     symbol: string;
@@ -87,21 +88,21 @@ export default function Navbar({ showSearch = true }: NavbarProps) {
     };
 
     return (
-        <header className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-lg border-b border-slate-100">
+        <header className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-lg border-b border-slate-100 dark:bg-slate-900/90 dark:border-slate-800 transition-colors">
             <div className="container-width h-16 flex items-center justify-between">
                 {/* Brand */}
                 <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-                    <div className="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center text-white shadow-lg shadow-slate-900/20">
+                    <div className="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center text-white shadow-lg shadow-slate-900/20 dark:bg-slate-50 dark:text-slate-900">
                         <TrendingUp size={18} />
                     </div>
-                    <span className="text-lg font-bold tracking-tight text-slate-900">InvestTrack</span>
+                    <span className="text-lg font-bold tracking-tight text-slate-900 dark:text-slate-50">InvestTrack</span>
                 </Link>
 
                 {/* Desktop Actions */}
                 <div className="hidden md:flex items-center gap-6">
                     <Link
                         href="/portfolio"
-                        className="text-sm font-semibold text-slate-500 hover:text-slate-900 transition-colors"
+                        className="text-sm font-semibold text-slate-500 hover:text-slate-900 transition-colors dark:text-slate-400 dark:hover:text-slate-100"
                     >
                         {t("nav.portfolio")}
                     </Link>
@@ -116,23 +117,23 @@ export default function Navbar({ showSearch = true }: NavbarProps) {
                                     onChange={(e) => setQuery(e.target.value)}
                                     placeholder={t("nav.search.placeholder")}
                                     onFocus={() => results.length > 0 && setIsOpen(true)}
-                                    className="pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm w-[260px] focus:outline-none focus:bg-white focus:border-slate-300 focus:ring-4 focus:ring-slate-50 transition-all placeholder:text-slate-400"
+                                    className="pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm w-[260px] focus:outline-none focus:bg-white focus:border-slate-300 focus:ring-4 focus:ring-slate-50 transition-all placeholder:text-slate-400 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100 dark:placeholder-slate-500 dark:focus:ring-slate-800 dark:focus:border-slate-600 dark:focus:bg-slate-900"
                                 />
                             </form>
                             {/* Small result dropdown for navbar */}
                             {isOpen && results.length > 0 && (
-                                <div className="absolute top-full right-0 mt-2 w-[320px] bg-white border border-slate-100 rounded-xl shadow-xl overflow-hidden z-50 py-1">
+                                <div className="absolute top-full right-0 mt-2 w-[320px] bg-white border border-slate-100 rounded-xl shadow-xl overflow-hidden z-50 py-1 dark:bg-slate-900 dark:border-slate-800 dark:shadow-slate-900/50">
                                     {results.map((result) => (
                                         <button
                                             key={result.symbol}
                                             onClick={() => handleSelect(result.symbol)}
-                                            className="w-full px-4 py-3 text-left hover:bg-slate-50 transition-colors flex items-center justify-between"
+                                            className="w-full px-4 py-3 text-left hover:bg-slate-50 transition-colors flex items-center justify-between dark:hover:bg-slate-800"
                                         >
                                             <div>
-                                                <span className="font-bold text-slate-900 block text-sm">{result.symbol}</span>
-                                                <span className="text-xs text-slate-500">{result.name}</span>
+                                                <span className="font-bold text-slate-900 block text-sm dark:text-slate-100">{result.symbol}</span>
+                                                <span className="text-xs text-slate-500 dark:text-slate-400">{result.name}</span>
                                             </div>
-                                            <span className="text-[10px] font-bold bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded">{result.exchange}</span>
+                                            <span className="text-[10px] font-bold bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded dark:bg-slate-800 dark:text-slate-400">{result.exchange}</span>
                                         </button>
                                     ))}
                                 </div>
@@ -144,18 +145,23 @@ export default function Navbar({ showSearch = true }: NavbarProps) {
 
                     <button
                         onClick={toggleLanguage}
-                        className="flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-slate-900 transition-colors"
+                        className="flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-slate-900 transition-colors dark:text-slate-400 dark:hover:text-slate-100"
                     >
                         <Globe size={16} />
                         <span>{language === "en" ? "EN" : "中"}</span>
                     </button>
+
+                    <div className="h-4 w-px bg-slate-200 dark:bg-slate-700"></div>
+
+                    <ThemeToggle />
                 </div>
 
                 {/* Mobile Icons */}
                 <div className="flex items-center gap-4 md:hidden">
-                    <button onClick={toggleLanguage} className="text-slate-600">
+                    <button onClick={toggleLanguage} className="text-slate-600 dark:text-slate-400">
                         <Globe size={20} />
                     </button>
+                    <ThemeToggle />
                     <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="text-slate-900">
                         {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
                     </button>
@@ -164,7 +170,7 @@ export default function Navbar({ showSearch = true }: NavbarProps) {
 
             {/* Mobile Menu Overlay */}
             {mobileMenuOpen && (
-                <div className="md:hidden border-t border-slate-100 bg-white p-4 space-y-4 shadow-xl">
+                <div className="md:hidden border-t border-slate-100 bg-white p-4 space-y-4 shadow-xl dark:bg-slate-900 dark:border-slate-800">
                     {showSearch && (
                         <form onSubmit={handleSubmit} className="relative">
                             <input
@@ -172,9 +178,9 @@ export default function Navbar({ showSearch = true }: NavbarProps) {
                                 value={query}
                                 onChange={(e) => setQuery(e.target.value)}
                                 placeholder={t("nav.search.placeholder")}
-                                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl"
+                                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100"
                             />
-                            <button type="submit" className="absolute right-3 top-1/2 -translate-y-1/2 bg-slate-900 text-white p-1.5 rounded-lg">
+                            <button type="submit" className="absolute right-3 top-1/2 -translate-y-1/2 bg-slate-900 text-white p-1.5 rounded-lg dark:bg-slate-700">
                                 <Search size={14} />
                             </button>
                         </form>
@@ -182,7 +188,7 @@ export default function Navbar({ showSearch = true }: NavbarProps) {
                     <Link
                         href="/portfolio"
                         onClick={() => setMobileMenuOpen(false)}
-                        className="block w-full text-center py-3 font-semibold text-slate-700 bg-slate-50 rounded-xl"
+                        className="block w-full text-center py-3 font-semibold text-slate-700 bg-slate-50 rounded-xl dark:bg-slate-800 dark:text-slate-200"
                     >
                         {t("nav.portfolio")}
                     </Link>

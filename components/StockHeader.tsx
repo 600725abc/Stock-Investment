@@ -42,12 +42,12 @@ export default function StockHeader({ symbol, name, price, change, changePercent
                 {/* Top Row: Meta information */}
                 <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-3">
-                        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-slate-50 text-slate-900">
+                        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-slate-50 text-slate-900 dark:bg-slate-800 dark:text-slate-100">
                             <span className="font-bold text-xs">{currency}</span>
                         </div>
                         <div>
-                            <h1 className="text-xl font-bold text-slate-900 tracking-tight">{symbol}</h1>
-                            <p className="text-sm text-slate-500 font-medium">{name}</p>
+                            <h1 className="text-xl font-bold text-slate-900 tracking-tight dark:text-slate-100">{symbol}</h1>
+                            <p className="text-sm text-slate-500 font-medium dark:text-slate-400">{name}</p>
                         </div>
                     </div>
                 </div>
@@ -55,18 +55,18 @@ export default function StockHeader({ symbol, name, price, change, changePercent
                 {/* Hero Section: Price */}
                 <div className="flex flex-col sm:flex-row sm:items-baseline gap-4 sm:gap-6 mb-8">
                     <div className="flex items-start">
-                        <span className="text-3xl font-medium text-slate-400 mr-1 mt-2">{currencySymbol}</span>
-                        <span className="text-6xl sm:text-7xl font-bold text-slate-900 tracking-tighter">
+                        <span className="text-3xl font-medium text-slate-400 mr-1 mt-2 dark:text-slate-500">{currencySymbol}</span>
+                        <span className="text-6xl sm:text-7xl font-bold text-slate-900 tracking-tighter dark:text-white">
                             {formattedPrice}
                         </span>
                     </div>
 
                     {/* Change Indicator - Visual pill, but clear typography */}
-                    <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-full border border-slate-100">
-                        <ChangeIcon size={16} className="text-slate-900" />
-                        <span className="text-lg font-semibold text-slate-900">
+                    <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-full border border-slate-100 dark:bg-slate-800 dark:border-slate-800">
+                        <ChangeIcon size={16} className="text-slate-900 dark:text-slate-100" />
+                        <span className="text-lg font-semibold text-slate-900 dark:text-slate-100">
                             {Math.abs(change).toFixed(2)}
-                            <span className="ml-1.5 text-slate-500 font-medium text-base">
+                            <span className="ml-1.5 text-slate-500 font-medium text-base dark:text-slate-400">
                                 ({Math.abs(changePercent).toFixed(2)}%)
                             </span>
                         </span>
@@ -74,23 +74,23 @@ export default function StockHeader({ symbol, name, price, change, changePercent
                 </div>
 
                 {/* Key Stats - Clean Grid */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-8 pt-8 border-t border-slate-100">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-8 pt-8 border-t border-slate-100 dark:border-slate-800">
                     <div>
-                        <p className="text-xs uppercase tracking-wider font-semibold text-slate-400 mb-2">{t("stock.stats.marketCap")}</p>
-                        <p className="text-lg font-semibold text-slate-700">{stats.marketCap}</p>
+                        <p className="text-xs uppercase tracking-wider font-semibold text-slate-400 mb-2 dark:text-slate-500">{t("stock.stats.marketCap")}</p>
+                        <p className="text-lg font-semibold text-slate-700 dark:text-slate-300">{stats.marketCap}</p>
                     </div>
                     <div>
-                        <p className="text-xs uppercase tracking-wider font-semibold text-slate-400 mb-2">{t("stock.stats.dayHigh")}</p>
-                        <p className="text-lg font-semibold text-slate-700">{currencySymbol}{parseFloat(stats.dayHigh).toLocaleString()}</p>
+                        <p className="text-xs uppercase tracking-wider font-semibold text-slate-400 mb-2 dark:text-slate-500">{t("stock.stats.dayHigh")}</p>
+                        <p className="text-lg font-semibold text-slate-700 dark:text-slate-300">{currencySymbol}{parseFloat(stats.dayHigh).toLocaleString()}</p>
                     </div>
                     <div>
-                        <p className="text-xs uppercase tracking-wider font-semibold text-slate-400 mb-2">{t("stock.stats.dayLow")}</p>
-                        <p className="text-lg font-semibold text-slate-700">{currencySymbol}{parseFloat(stats.dayLow).toLocaleString()}</p>
+                        <p className="text-xs uppercase tracking-wider font-semibold text-slate-400 mb-2 dark:text-slate-500">{t("stock.stats.dayLow")}</p>
+                        <p className="text-lg font-semibold text-slate-700 dark:text-slate-300">{currencySymbol}{parseFloat(stats.dayLow).toLocaleString()}</p>
                     </div>
                     <div>
-                        <p className="text-xs uppercase tracking-wider font-semibold text-slate-400 mb-2">{t("stock.stats.change")}</p>
+                        <p className="text-xs uppercase tracking-wider font-semibold text-slate-400 mb-2 dark:text-slate-500">{t("stock.stats.change")}</p>
                         {/* Neutral representation of change stat */}
-                        <p className="text-lg font-semibold text-slate-700">
+                        <p className="text-lg font-semibold text-slate-700 dark:text-slate-300">
                             {change > 0 ? "+" : ""}{change.toFixed(2)}
                         </p>
                     </div>

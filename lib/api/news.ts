@@ -111,10 +111,8 @@ export async function getGoogleNews(symbol: string) {
                 isCredible: isCredibleSource(item.extractedSource),
                 priority: getSourcePriority(item.extractedSource)
             }))
-            // Sort by: credible first, then by priority (wire services first), then by date
+            // Sort by: Strictly date descending (newest first)
             .sort((a, b) => {
-                if (a.isCredible !== b.isCredible) return a.isCredible ? -1 : 1;
-                if (a.priority !== b.priority) return a.priority - b.priority;
                 return b.parsedDate.getTime() - a.parsedDate.getTime();
             })
             .slice(0, 8);
