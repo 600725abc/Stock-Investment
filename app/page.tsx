@@ -2,7 +2,7 @@
 
 import Navbar from "@/components/Navbar";
 import HomeSearch from "@/components/HomeSearch";
-import { TrendingUp, BarChart3, Newspaper, Globe2 } from "lucide-react";
+import { TrendingUp } from "lucide-react";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 export default function Home() {
@@ -28,21 +28,6 @@ export default function Home() {
           </p>
 
           <HomeSearch />
-
-
-          {/* Features - Minimal Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 w-full mt-24 border-t border-slate-100 pt-12 dark:border-slate-800 transition-colors">
-            {[
-              { icon: BarChart3, label: "home.features.charts" },
-              { icon: Newspaper, label: "home.features.news" },
-              { icon: Globe2, label: "home.features.global" }
-            ].map((feature, i) => (
-              <div key={i} className="flex flex-col items-center gap-3 p-4">
-                <feature.icon className="text-slate-400 w-6 h-6 dark:text-slate-500" strokeWidth={1.5} />
-                <span className="font-semibold text-slate-700 dark:text-slate-300 transition-colors">{t(feature.label)}</span>
-              </div>
-            ))}
-          </div>
         </div>
       </main>
 
