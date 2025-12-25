@@ -1,79 +1,88 @@
-const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+import YahooFinance from "yahoo-finance2";
+
+const yahooFinance = new YahooFinance();
 
 export async function getYahooQuote(symbol: string) {
     try {
-        const response = await fetch(`https://query1.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(symbol)}`, {
-            headers: { 'User-Agent': USER_AGENT }
-        });
+        const quote = await yahooFinance.quote(symbol);
 
-        if (!response.ok) {
-            console.error(`Yahoo API error: ${response.status} ${response.statusText}`);
+        if (!quote) {
+            console.warn(`No quote found for ${symbol}`);
             return null;
         }
-
-        const data = await response.json();
-
-        if (!data.quoteResponse || !data.quoteResponse.result || data.quoteResponse.result.length === 0) {
-            console.warn(`No result found for ${symbol}`);
-            return null;
-        }
-
-        const result = data.quoteResponse.result[0];
 
         return {
-            price: result.regularMarketPrice,
-            change: result.regularMarketChange,
-            changePercent: result.regularMarketChangePercent,
-            high: result.regularMarketDayHigh,
-            low: result.regularMarketDayLow,
-            name: result.longName || result.shortName || symbol,
-            marketCap: formatMarketCap(result.marketCap)
+            price: quote.regularMarketPrice,
+            change: quote.regularMarketChange,
+            changePercent: quote.regularMarketChangePercent,
+            high: quote.regularMarketDayHigh,
+            low: quote.regularMarketDayLow,
+            name: quote.longName || quote.shortName || symbol,
+            marketCap: formatMarketCap(quote.marketCap),
+            currency: quote.currency || "USD"
         };
-    } catch (error: any) {
-        console.error(`Yahoo Quote Fetch Error for ${symbol}:`, error.message);
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.error(`Yahoo Quote Error for ${symbol}:`, message);
         return null;
     }
 }
 
-export async function getYahooChart(symbol: string, period1: Date, period2: Date, interval: string = '1d') {
+export async function getYahooChart(symbol: string, period1: Date, period2: Date, interval: "1d" | "1wk" | "1mo" | "5m" | "1h" = "1d") {
     try {
-        const p1 = Math.floor(period1.getTime() / 1000);
-        const p2 = Math.floor(period2.getTime() / 1000);
-
-        const response = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?period1=${p1}&period2=${p2}&interval=${interval}`, {
-            headers: { 'User-Agent': USER_AGENT }
+        const result = await yahooFinance.chart(symbol, {
+            period1,
+            period2,
+            interval
         });
 
-        if (!response.ok) return null;
+        if (!result || !result.quotes || result.quotes.length === 0) {
+            return null;
+        }
 
-        const data = await response.json();
-
-        if (!data.chart || !data.chart.result || !data.chart.result[0]) return null;
-
-        const result = data.chart.result[0];
-        const timestamps = result.timestamp || [];
-        const indicators = result.indicators.quote[0];
-        const closePrices = indicators.close || [];
-
-        return timestamps.map((t: number, i: number) => ({
-            time: formatTimeLabel(t, interval),
-            price: closePrices[i]
-        })).filter((q: any) => q.price !== null);
-    } catch (error: any) {
-        console.error(`Yahoo Chart Fetch Error for ${symbol}:`, error.message);
+        return result.quotes.map((q) => ({
+            time: formatTimeLabel(q.date, interval),
+            price: q.close
+        })).filter((q) => q.price !== null && q.price !== undefined);
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.error(`Yahoo Chart Error for ${symbol}:`, message);
         return null;
     }
 }
 
-function formatTimeLabel(timestamp: number, interval: string) {
-    const date = new Date(timestamp * 1000);
-    if (interval === '5m' || interval === '1h') {
-        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+export async function searchStocks(query: string) {
+    try {
+        const results = await yahooFinance.search(query, { quotesCount: 8 });
+
+        if (!results || !results.quotes) {
+            return [];
+        }
+
+        return results.quotes
+            .filter((q): q is typeof q & { symbol: string } => !!q.symbol)
+            .map((q) => ({
+                symbol: q.symbol,
+                name: q.longname || q.shortname || q.symbol,
+                exchange: q.exchange || "",
+                type: q.quoteType || ""
+            }));
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.error(`Yahoo Search Error:`, message);
+        return [];
+    }
+}
+
+function formatTimeLabel(date: Date | undefined, interval: string): string {
+    if (!date) return "";
+    if (interval === "5m" || interval === "1h") {
+        return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
     }
     return date.toLocaleDateString();
 }
 
-function formatMarketCap(value: number | undefined) {
+function formatMarketCap(value: number | undefined): string {
     if (!value) return "N/A";
     if (value >= 1e12) return (value / 1e12).toFixed(2) + "T";
     if (value >= 1e9) return (value / 1e9).toFixed(2) + "B";

@@ -5,6 +5,8 @@ import NewsList from "@/components/NewsList";
 import PortfolioManager from "@/components/PortfolioManager";
 import { getYahooQuote } from "@/lib/api/yahoo";
 import { getGoogleNews } from "@/lib/api/news";
+import StockNotFound from "./StockNotFound";
+import StockFooter from "./StockFooter";
 
 const getStockData = async (ticker: string) => {
     const symbol = ticker.toUpperCase();
@@ -23,6 +25,7 @@ const getStockData = async (ticker: string) => {
             price: quote.price || 0,
             change: quote.change || 0,
             changePercent: quote.changePercent || 0,
+            currency: quote.currency || "USD",
             stats: {
                 marketCap: quote.marketCap,
                 dayHigh: quote.high?.toFixed(2) || "N/A",
@@ -30,8 +33,9 @@ const getStockData = async (ticker: string) => {
             },
             news: news || []
         };
-    } catch (error: any) {
-        console.error("Failed to fetch stock data:", error.message);
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.error("Failed to fetch stock data:", message);
         return null;
     }
 };
@@ -44,13 +48,7 @@ export default async function StockPage({ params }: { params: Promise<{ ticker: 
         return (
             <div className="flex flex-col min-h-screen bg-zinc-50/30">
                 <Navbar />
-                <main className="flex-1 flex flex-col items-center justify-center p-8">
-                    <div className="bg-white p-12 rounded-3xl border border-zinc-100 shadow-sm text-center max-w-md">
-                        <h1 className="text-2xl font-bold text-zinc-900 mb-2">Stock Not Found</h1>
-                        <p className="text-zinc-500 mb-6">We couldn't find data for "{ticker.toUpperCase()}". Please check the symbol and try again.</p>
-                        <a href="/" className="inline-block px-6 py-2 bg-black text-white rounded-lg font-bold">Back to Search</a>
-                    </div>
-                </main>
+                <StockNotFound ticker={ticker} />
             </div>
         );
     }
@@ -59,13 +57,14 @@ export default async function StockPage({ params }: { params: Promise<{ ticker: 
         <div className="flex flex-col min-h-screen bg-zinc-50/30">
             <Navbar />
 
-            <main className="flex-1 w-full max-w-5xl mx-auto px-8 py-24">
+            <main className="container-width py-12 mt-16 sm:mt-20">
                 <StockHeader
                     symbol={data.symbol}
                     name={data.name}
                     price={data.price}
                     change={data.change}
                     changePercent={data.changePercent}
+                    currency={data.currency}
                     stats={data.stats}
                 />
 
@@ -77,9 +76,7 @@ export default async function StockPage({ params }: { params: Promise<{ ticker: 
                 </div>
             </main>
 
-            <footer className="py-12 text-center text-zinc-400 text-sm border-t border-zinc-100 bg-white font-sans">
-                &copy; {new Date().getFullYear()} InvestTrack. World market data via Yahoo Finance & Google News.
-            </footer>
+            <StockFooter />
         </div>
     );
 }

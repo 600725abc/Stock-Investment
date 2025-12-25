@@ -1,14 +1,14 @@
 "use client";
 
-import { Clock } from "lucide-react";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 interface NewsItem {
     id: string;
     title: string;
-    summary: string;
+    summary?: string;
     source: string;
     timeAgo: string;
-    url: string;
+    url?: string;
 }
 
 interface NewsListProps {
@@ -16,33 +16,58 @@ interface NewsListProps {
 }
 
 export default function NewsList({ news }: NewsListProps) {
-    return (
-        <div className="bg-white rounded-xl border border-zinc-100 p-8 shadow-sm">
-            <h2 className="text-xl font-bold text-zinc-900 mb-8">Latest News</h2>
+    const { t } = useLanguage();
 
-            <div className="flex flex-col gap-8">
-                {news.map((item, index) => (
-                    <div key={item.id} className={`flex flex-col gap-3 ${index !== news.length - 1 ? "pb-8 border-b border-zinc-50" : ""}`}>
+    if (!news || news.length === 0) {
+        return (
+            <div className="fintech-card p-6 sm:p-8">
+                <h3 className="text-lg font-bold text-slate-900 mb-4">{t("stock.news.title")}</h3>
+                <p className="text-slate-400 italic">No news available at the moment.</p>
+            </div>
+        );
+    }
+
+    return (
+        <div className="fintech-card p-6 sm:p-10 mb-12">
+            <div className="flex items-center justify-between mb-8 border-b border-slate-100 pb-4">
+                <h3 className="text-xl font-bold text-slate-900">{t("stock.news.title")}</h3>
+                <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Press & Media</span>
+            </div>
+
+            <div className="flex flex-col gap-10">
+                {news.map((item) => (
+                    <article key={item.id} className="group flex flex-col items-start gap-3">
+                        {/* Meta Top Line */}
+                        <div className="flex items-center gap-3 text-xs font-medium text-slate-400">
+                            <span className="text-slate-900 font-bold uppercase tracking-wide">{item.source}</span>
+                            <span className="w-1 h-1 rounded-full bg-slate-300"></span>
+                            <span>{item.timeAgo}</span>
+                        </div>
+
+                        {/* Title */}
                         <a
-                            href={item.url}
+                            href={item.url || "#"}
                             target="_blank"
-                            className="text-lg font-bold text-zinc-900 hover:text-emerald-500 transition-colors leading-snug"
+                            rel="noopener noreferrer"
+                            className="text-lg sm:text-xl font-bold text-slate-900 group-hover:text-slate-600 transition-colors leading-snug"
                         >
                             {item.title}
                         </a>
 
-                        <p className="text-zinc-500 leading-relaxed text-sm">
-                            {item.summary}
-                        </p>
+                        {/* Summary */}
+                        {item.summary && item.summary !== item.title && (
+                            <p className="text-slate-500 text-sm sm:text-base leading-relaxed line-clamp-2 max-w-3xl">
+                                {item.summary}
+                            </p>
+                        )}
 
-                        <div className="flex items-center gap-4 text-xs font-semibold text-zinc-400">
-                            <span className="uppercase tracking-wider">{item.source}</span>
-                            <div className="flex items-center gap-1">
-                                <Clock size={12} />
-                                <span>{item.timeAgo}</span>
-                            </div>
+                        {/* Read More Link (Subtle) */}
+                        <div className="mt-1">
+                            <a href={item.url || "#"} target="_blank" className="text-sm font-semibold text-slate-900 hover:text-slate-600 border-b border-slate-200 hover:border-slate-400 transition-all pb-0.5">
+                                Read full story
+                            </a>
                         </div>
-                    </div>
+                    </article>
                 ))}
             </div>
         </div>
