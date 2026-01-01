@@ -18,7 +18,10 @@ const getStockData = async (ticker: string) => {
             getYahooChartByRange(symbol, "1M")
         ]);
 
-        if (!quote) throw new Error("Stock not found or API error");
+        if (!quote) {
+            // Return a special flag to indicate API error vs stock not found
+            return { error: "API_ERROR" };
+        }
 
         return {
             symbol,
@@ -38,7 +41,7 @@ const getStockData = async (ticker: string) => {
     } catch (error: unknown) {
         const message = error instanceof Error ? error.message : String(error);
         console.error("Failed to fetch stock data:", message);
-        return null;
+        return { error: "API_ERROR" };
     }
 };
 
@@ -46,11 +49,12 @@ export default async function StockPage({ params }: { params: Promise<{ ticker: 
     const { ticker } = await params;
     const data = await getStockData(ticker);
 
-    if (!data) {
+    if (!data || "error" in data) {
+        const isApiError = data && "error" in data && data.error === "API_ERROR";
         return (
-            <div className="flex flex-col min-h-screen bg-zinc-50/30">
+            <div className="flex flex-col min-h-screen bg-zinc-50/30 dark:bg-slate-950">
                 <Navbar />
-                <StockNotFound ticker={ticker} />
+                <StockNotFound ticker={ticker} isApiError={isApiError} />
             </div>
         );
     }
