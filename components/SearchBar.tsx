@@ -108,8 +108,8 @@ export default function SearchBar({ placeholder, className = "", onSelect, autoF
     };
 
     const handleSelect = (symbol: string) => {
+        setQuery(symbol);
         setIsOpen(false);
-        setQuery("");
         if (onSelect) {
             onSelect(symbol);
         } else {
@@ -160,8 +160,8 @@ export default function SearchBar({ placeholder, className = "", onSelect, autoF
                                 onClick={() => handleSelect(result.symbol)}
                                 onMouseEnter={() => setActiveIndex(index)}
                                 className={`w-full px-5 py-3 text-left transition-colors flex flex-col border-b border-slate-50 last:border-0 dark:border-slate-800 ${index === activeIndex
-                                        ? "bg-slate-50 dark:bg-slate-800"
-                                        : "hover:bg-slate-50 dark:hover:bg-slate-800"
+                                    ? "bg-slate-50 dark:bg-slate-800"
+                                    : "hover:bg-slate-50 dark:hover:bg-slate-800"
                                     }`}
                             >
                                 <div className="flex items-center justify-between mb-0.5">

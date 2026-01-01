@@ -72,6 +72,48 @@
         "type": "EQUITY"
     },
     {
+        "symbol": "0050.TW",
+        "name": "Yuanta Taiwan Top 50 ETF",
+        "exchange": "Taiwan",
+        "type": "ETF"
+    },
+    {
+        "symbol": "0056.TW",
+        "name": "Yuanta Taiwan Dividend Plus ETF",
+        "exchange": "Taiwan",
+        "type": "ETF"
+    },
+    {
+        "symbol": "2317.TW",
+        "name": "Hon Hai Precision Industry Co., Ltd. (Foxconn)",
+        "exchange": "Taiwan",
+        "type": "EQUITY"
+    },
+    {
+        "symbol": "2454.TW",
+        "name": "MediaTek Inc.",
+        "exchange": "Taiwan",
+        "type": "EQUITY"
+    },
+    {
+        "symbol": "2412.TW",
+        "name": "Chunghwa Telecom Co., Ltd.",
+        "exchange": "Taiwan",
+        "type": "EQUITY"
+    },
+    {
+        "symbol": "2881.TW",
+        "name": "Fubon Financial Holding Co., Ltd.",
+        "exchange": "Taiwan",
+        "type": "EQUITY"
+    },
+    {
+        "symbol": "2882.TW",
+        "name": "Cathay Financial Holding Co., Ltd.",
+        "exchange": "Taiwan",
+        "type": "EQUITY"
+    },
+    {
         "symbol": "BTC-USD",
         "name": "Bitcoin USD",
         "exchange": "CCC",
