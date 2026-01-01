@@ -31,17 +31,28 @@ export default function HomeSearch() {
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
+    const [isError, setIsError] = useState(false);
+
     useEffect(() => {
         if (query.length < 1) {
             setResults([]);
             setIsOpen(false);
+            setIsError(false);
             return;
         }
 
         const timer = setTimeout(async () => {
             setIsLoading(true);
+            setIsError(false);
+
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 8000); // 8s timeout
+
             try {
-                const response = await fetch(`/api/stock/search?q=${encodeURIComponent(query)}`);
+                const response = await fetch(`/api/stock/search?q=${encodeURIComponent(query)}`, {
+                    signal: controller.signal
+                });
+                if (!response.ok) throw new Error("Search failed");
                 const data = await response.json();
                 if (Array.isArray(data)) {
                     setResults(data);
@@ -49,7 +60,9 @@ export default function HomeSearch() {
                 }
             } catch (error) {
                 console.error("Search error:", error);
+                setIsError(true);
             } finally {
+                clearTimeout(timeoutId);
                 setIsLoading(false);
             }
         }, 300);
@@ -102,8 +115,14 @@ export default function HomeSearch() {
                 {t("home.search.hint")}
             </p>
 
+            {isError && (
+                <div className="absolute top-full mt-3 w-full bg-white border border-red-100 rounded-xl shadow-2xl p-4 text-center z-20 dark:bg-slate-900 dark:border-red-900/30">
+                    <p className="text-sm text-red-500 font-medium">Failed to connect to server. Please try again.</p>
+                </div>
+            )}
+
             {/* Results Dropdown - Floating Card */}
-            {isOpen && results.length > 0 && (
+            {isOpen && results.length > 0 && !isError && (
                 <div className="absolute top-full mt-3 w-full bg-white border border-slate-100 rounded-xl shadow-2xl overflow-hidden z-20 dark:bg-slate-900 dark:border-slate-800 dark:shadow-slate-950/50">
                     <div className="max-h-[320px] overflow-y-auto">
                         {results.map((result) => (

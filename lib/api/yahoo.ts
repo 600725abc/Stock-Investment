@@ -2,7 +2,17 @@ import YahooFinance from "yahoo-finance2";
 
 const yahooFinance = new YahooFinance();
 
+const CACHE: Record<string, { data: any, timestamp: number }> = {};
+const CACHE_TTL = 2 * 60 * 1000; // 2 minutes
+
 export async function getYahooQuote(symbol: string) {
+    const cacheKey = `quote_${symbol}`;
+    const now = Date.now();
+
+    if (CACHE[cacheKey] && now - CACHE[cacheKey].timestamp < CACHE_TTL) {
+        return CACHE[cacheKey].data;
+    }
+
     try {
         const quote = await yahooFinance.quote(symbol);
 
@@ -11,7 +21,7 @@ export async function getYahooQuote(symbol: string) {
             return null;
         }
 
-        return {
+        const data = {
             price: quote.regularMarketPrice,
             change: quote.regularMarketChange,
             changePercent: quote.regularMarketChangePercent,
@@ -21,6 +31,9 @@ export async function getYahooQuote(symbol: string) {
             marketCap: formatMarketCap(quote.marketCap),
             currency: quote.currency || "USD"
         };
+
+        CACHE[cacheKey] = { data, timestamp: now };
+        return data;
     } catch (error: unknown) {
         const message = error instanceof Error ? error.message : String(error);
         console.error(`Yahoo Quote Error for ${symbol}:`, message);
@@ -29,6 +42,13 @@ export async function getYahooQuote(symbol: string) {
 }
 
 export async function getYahooChart(symbol: string, period1: Date, period2: Date, interval: "1d" | "1wk" | "1mo" | "5m" | "1h" = "1d") {
+    const cacheKey = `chart_${symbol}_${interval}_${period1.getTime()}_${period2.getTime()}`;
+    const now = Date.now();
+
+    if (CACHE[cacheKey] && now - CACHE[cacheKey].timestamp < 5 * 60 * 1000) {
+        return CACHE[cacheKey].data;
+    }
+
     try {
         const result = await yahooFinance.chart(symbol, {
             period1,
@@ -40,10 +60,13 @@ export async function getYahooChart(symbol: string, period1: Date, period2: Date
             return null;
         }
 
-        return result.quotes.map((q) => ({
+        const data = result.quotes.map((q) => ({
             time: formatTimeLabel(q.date, interval),
             price: q.close
         })).filter((q) => q.price !== null && q.price !== undefined);
+
+        CACHE[cacheKey] = { data, timestamp: now };
+        return data;
     } catch (error: unknown) {
         const message = error instanceof Error ? error.message : String(error);
         console.error(`Yahoo Chart Error for ${symbol}:`, message);
@@ -51,7 +74,48 @@ export async function getYahooChart(symbol: string, period1: Date, period2: Date
     }
 }
 
+export async function getYahooChartByRange(symbol: string, range: string = "1M") {
+    const to = new Date();
+    let from: Date;
+    let interval: '5m' | '1h' | '1d' | '1wk' | '1mo' = '1d';
+
+    switch (range) {
+        case "1D":
+            from = new Date(Date.now() - 24 * 60 * 60 * 1000);
+            interval = "5m";
+            break;
+        case "1W":
+            from = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+            interval = "1h";
+            break;
+        case "1M":
+            from = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+            interval = "1d";
+            break;
+        case "3M":
+            from = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
+            interval = "1d";
+            break;
+        case "1Y":
+            from = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000);
+            interval = "1wk";
+            break;
+        default:
+            from = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+            interval = "1d";
+    }
+
+    return getYahooChart(symbol, from, to, interval);
+}
+
 export async function searchStocks(query: string) {
+    const cacheKey = `search_${query.toLowerCase()}`;
+    const now = Date.now();
+
+    if (CACHE[cacheKey] && now - CACHE[cacheKey].timestamp < 24 * 60 * 60 * 1000) {
+        return CACHE[cacheKey].data;
+    }
+
     try {
         const results = await yahooFinance.search(query, { quotesCount: 8 });
 
@@ -59,7 +123,7 @@ export async function searchStocks(query: string) {
             return [];
         }
 
-        return results.quotes
+        const data = results.quotes
             .filter((q): q is typeof q & { symbol: string } => !!q.symbol)
             .map((q) => ({
                 symbol: q.symbol,
@@ -67,6 +131,9 @@ export async function searchStocks(query: string) {
                 exchange: q.exchange || "",
                 type: q.quoteType || ""
             }));
+
+        CACHE[cacheKey] = { data, timestamp: now };
+        return data;
     } catch (error: unknown) {
         const message = error instanceof Error ? error.message : String(error);
         console.error(`Yahoo Search Error:`, message);

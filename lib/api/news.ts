@@ -92,7 +92,17 @@ function getSourcePriority(source: string): number {
     return CREDIBLE_SOURCES.length; // Uncredible sources get lowest priority
 }
 
+const NEWS_CACHE: Record<string, { data: any, timestamp: number }> = {};
+const NEWS_CACHE_TTL = 10 * 60 * 1000; // 10 minutes
+
 export async function getGoogleNews(symbol: string) {
+    const cacheKey = `news_${symbol.toUpperCase()}`;
+    const now = Date.now();
+
+    if (NEWS_CACHE[cacheKey] && now - NEWS_CACHE[cacheKey].timestamp < NEWS_CACHE_TTL) {
+        return NEWS_CACHE[cacheKey].data;
+    }
+
     try {
         const feed = await parser.parseURL(
             `https://news.google.com/rss/search?q=${encodeURIComponent(symbol)}+stock&hl=en-US&gl=US&ceid=US:en`
@@ -117,7 +127,7 @@ export async function getGoogleNews(symbol: string) {
             })
             .slice(0, 8);
 
-        return processedItems.map(item => ({
+        const data = processedItems.map(item => ({
             id: item.guid || Math.random().toString(),
             title: cleanHeadline(item.title || ""),
             summary: item.contentSnippet || item.title,
@@ -125,6 +135,9 @@ export async function getGoogleNews(symbol: string) {
             timeAgo: formatRelativeTime(item.parsedDate),
             url: item.link
         }));
+
+        NEWS_CACHE[cacheKey] = { data, timestamp: now };
+        return data;
     } catch (error) {
         console.error("News RSS Error:", error);
         return [];

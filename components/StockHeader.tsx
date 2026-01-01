@@ -81,11 +81,11 @@ export default function StockHeader({ symbol, name, price, change, changePercent
                     </div>
                     <div>
                         <p className="text-xs uppercase tracking-wider font-semibold text-slate-400 mb-2 dark:text-slate-500">{t("stock.stats.dayHigh")}</p>
-                        <p className="text-lg font-semibold text-slate-700 dark:text-slate-300">{currencySymbol}{parseFloat(stats.dayHigh).toLocaleString()}</p>
+                        <p className="text-lg font-semibold text-slate-700 dark:text-slate-300">{stats.dayHigh === "N/A" ? "N/A" : `${currencySymbol}${parseFloat(stats.dayHigh).toLocaleString()}`}</p>
                     </div>
                     <div>
                         <p className="text-xs uppercase tracking-wider font-semibold text-slate-400 mb-2 dark:text-slate-500">{t("stock.stats.dayLow")}</p>
-                        <p className="text-lg font-semibold text-slate-700 dark:text-slate-300">{currencySymbol}{parseFloat(stats.dayLow).toLocaleString()}</p>
+                        <p className="text-lg font-semibold text-slate-700 dark:text-slate-300">{stats.dayLow === "N/A" ? "N/A" : `${currencySymbol}${parseFloat(stats.dayLow).toLocaleString()}`}</p>
                     </div>
                     <div>
                         <p className="text-xs uppercase tracking-wider font-semibold text-slate-400 mb-2 dark:text-slate-500">{t("stock.stats.change")}</p>

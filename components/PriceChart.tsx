@@ -21,28 +21,51 @@ const ranges = ["1D", "1W", "1M", "3M", "1Y"];
 export default function PriceChart({ symbol, initialData }: PriceChartProps) {
     const [activeRange, setActiveRange] = useState("1M");
     const [data, setData] = useState<ChartData[]>(initialData);
-    const [isLoading, setIsLoading] = useState(true);
+    const [isLoading, setIsLoading] = useState(initialData.length === 0);
+    const [isError, setIsError] = useState(false);
     const { t } = useLanguage();
     const { theme } = useTheme();
 
     useEffect(() => {
+        // Skip fetch if we have initial data and we're looking at the default 1M range
+        if (activeRange === "1M" && initialData.length > 0 && data === initialData) {
+            setIsLoading(false);
+            return;
+        }
+
         async function fetchChartData() {
             setIsLoading(true);
+            setIsError(false);
+
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+
             try {
-                const response = await fetch(`/api/stock/chart?symbol=${symbol}&range=${activeRange}`);
+                const response = await fetch(`/api/stock/chart?symbol=${symbol}&range=${activeRange}`, {
+                    signal: controller.signal
+                });
+                if (!response.ok) throw new Error("Failed to fetch");
                 const newData = await response.json();
                 if (Array.isArray(newData)) {
                     setData(newData);
+                } else {
+                    setIsError(true);
                 }
-            } catch (error) {
-                console.error("Failed to fetch chart data:", error);
+            } catch (error: any) {
+                if (error.name === 'AbortError') {
+                    console.error("Fetch timed out");
+                } else {
+                    console.error("Failed to fetch chart data:", error);
+                }
+                setIsError(true);
             } finally {
+                clearTimeout(timeoutId);
                 setIsLoading(false);
             }
         }
 
         fetchChartData();
-    }, [activeRange, symbol]);
+    }, [activeRange, symbol, initialData]);
 
     const isDark = theme === 'dark';
 
@@ -73,6 +96,17 @@ export default function PriceChart({ symbol, initialData }: PriceChartProps) {
                 {isLoading && (
                     <div className="absolute inset-0 flex items-center justify-center bg-white/60 z-10 backdrop-blur-sm transition-all dark:bg-slate-900/60">
                         <Loader2 className="w-5 h-5 text-slate-900 animate-spin dark:text-slate-100" />
+                    </div>
+                )}
+                {isError && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/60 z-10 backdrop-blur-sm transition-all dark:bg-slate-900/60">
+                        <p className="text-sm font-medium text-red-500 mb-2">Failed to load chart data</p>
+                        <button
+                            onClick={() => setActiveRange(activeRange)}
+                            className="text-xs font-bold text-slate-900 underline dark:text-slate-100"
+                        >
+                            Try Again
+                        </button>
                     </div>
                 )}
                 <ResponsiveContainer width="100%" height="100%">

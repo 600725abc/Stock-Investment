@@ -3,7 +3,7 @@ import StockHeader from "@/components/StockHeader";
 import PriceChart from "@/components/PriceChart";
 import NewsList from "@/components/NewsList";
 import PortfolioManager from "@/components/PortfolioManager";
-import { getYahooQuote } from "@/lib/api/yahoo";
+import { getYahooQuote, getYahooChartByRange } from "@/lib/api/yahoo";
 import { getGoogleNews } from "@/lib/api/news";
 import StockNotFound from "./StockNotFound";
 import StockFooter from "./StockFooter";
@@ -12,9 +12,10 @@ const getStockData = async (ticker: string) => {
     const symbol = ticker.toUpperCase();
 
     try {
-        const [quote, news] = await Promise.all([
+        const [quote, news, chartData] = await Promise.all([
             getYahooQuote(symbol),
-            getGoogleNews(symbol)
+            getGoogleNews(symbol),
+            getYahooChartByRange(symbol, "1M")
         ]);
 
         if (!quote) throw new Error("Stock not found or API error");
@@ -31,7 +32,8 @@ const getStockData = async (ticker: string) => {
                 dayHigh: quote.high?.toFixed(2) || "N/A",
                 dayLow: quote.low?.toFixed(2) || "N/A",
             },
-            news: news || []
+            news: news || [],
+            initialChartData: chartData || []
         };
     } catch (error: unknown) {
         const message = error instanceof Error ? error.message : String(error);
@@ -71,7 +73,7 @@ export default async function StockPage({ params }: { params: Promise<{ ticker: 
                 <PortfolioManager symbol={data.symbol} currentPrice={data.price} />
 
                 <div className="space-y-6">
-                    <PriceChart symbol={data.symbol} initialData={[]} />
+                    <PriceChart symbol={data.symbol} initialData={data.initialChartData} />
                     <NewsList news={data.news} />
                 </div>
             </main>
