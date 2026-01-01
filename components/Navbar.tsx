@@ -1,87 +1,21 @@
 "use client";
 
-import { TrendingUp, Globe, Menu, X, Search } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+import { TrendingUp, Globe, Menu, X } from "lucide-react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { ThemeToggle } from "@/components/ThemeToggle";
-
-interface SearchResult {
-    symbol: string;
-    name: string;
-    exchange: string;
-    type: string;
-}
+import SearchBar from "@/components/SearchBar";
 
 interface NavbarProps {
     showSearch?: boolean;
 }
 
 export default function Navbar({ showSearch = true }: NavbarProps) {
-    const [query, setQuery] = useState("");
-    const [results, setResults] = useState<SearchResult[]>([]);
-    const [isOpen, setIsOpen] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const router = useRouter();
-    const dropdownRef = useRef<HTMLDivElement>(null);
     const { language, setLanguage, t } = useLanguage();
-
-    // ... (keep useEffects same as before, just update styles in return)
-
-    useEffect(() => {
-        function handleClickOutside(event: MouseEvent) {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-                setIsOpen(false);
-            }
-        }
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, []);
-
-    useEffect(() => {
-        if (query.length < 1) {
-            setResults([]);
-            setIsOpen(false);
-            return;
-        }
-
-        const timer = setTimeout(async () => {
-            setIsLoading(true);
-            try {
-                const response = await fetch(`/api/stock/search?q=${encodeURIComponent(query)}`);
-                const data = await response.json();
-                if (Array.isArray(data)) {
-                    setResults(data);
-                    setIsOpen(true);
-                }
-            } catch (error) {
-                console.error("Search error:", error);
-            } finally {
-                setIsLoading(false);
-            }
-        }, 300);
-
-        return () => clearTimeout(timer);
-    }, [query]);
-
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (query.trim()) {
-            router.push(`/${query.toUpperCase()}`);
-            setIsOpen(false);
-            setQuery("");
-            setMobileMenuOpen(false);
-        }
-    };
-
-    const handleSelect = (symbol: string) => {
-        router.push(`/${symbol}`);
-        setIsOpen(false);
-        setQuery("");
-        setMobileMenuOpen(false);
-    };
 
     const toggleLanguage = () => {
         setLanguage(language === "en" ? "zh" : "en");
@@ -108,40 +42,13 @@ export default function Navbar({ showSearch = true }: NavbarProps) {
                     </Link>
 
                     {showSearch && (
-                        <div ref={dropdownRef} className="relative">
-                            <form onSubmit={handleSubmit} className="relative group">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 group-focus-within:text-slate-900 transition-colors" />
-                                <input
-                                    type="text"
-                                    value={query}
-                                    onChange={(e) => setQuery(e.target.value)}
-                                    placeholder={t("nav.search.placeholder")}
-                                    onFocus={() => results.length > 0 && setIsOpen(true)}
-                                    className="pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm w-[260px] focus:outline-none focus:bg-white focus:border-slate-300 focus:ring-4 focus:ring-slate-50 transition-all placeholder:text-slate-400 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100 dark:placeholder-slate-500 dark:focus:ring-slate-800 dark:focus:border-slate-600 dark:focus:bg-slate-900"
-                                />
-                            </form>
-                            {/* Small result dropdown for navbar */}
-                            {isOpen && results.length > 0 && (
-                                <div className="absolute top-full right-0 mt-2 w-[320px] bg-white border border-slate-100 rounded-xl shadow-xl overflow-hidden z-50 py-1 dark:bg-slate-900 dark:border-slate-800 dark:shadow-slate-900/50">
-                                    {results.map((result) => (
-                                        <button
-                                            key={result.symbol}
-                                            onClick={() => handleSelect(result.symbol)}
-                                            className="w-full px-4 py-3 text-left hover:bg-slate-50 transition-colors flex items-center justify-between dark:hover:bg-slate-800"
-                                        >
-                                            <div>
-                                                <span className="font-bold text-slate-900 block text-sm dark:text-slate-100">{result.symbol}</span>
-                                                <span className="text-xs text-slate-500 dark:text-slate-400">{result.name}</span>
-                                            </div>
-                                            <span className="text-[10px] font-bold bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded dark:bg-slate-800 dark:text-slate-400">{result.exchange}</span>
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
+                        <SearchBar
+                            className="w-[300px]"
+                            placeholder={t("nav.search.placeholder")}
+                        />
                     )}
 
-                    <div className="h-4 w-px bg-slate-200"></div>
+                    <div className="h-4 w-px bg-slate-200 dark:bg-slate-700"></div>
 
                     <button
                         onClick={toggleLanguage}
@@ -162,7 +69,7 @@ export default function Navbar({ showSearch = true }: NavbarProps) {
                         <Globe size={20} />
                     </button>
                     <ThemeToggle />
-                    <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="text-slate-900">
+                    <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="text-slate-900 dark:text-slate-100">
                         {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
                     </button>
                 </div>
@@ -172,18 +79,14 @@ export default function Navbar({ showSearch = true }: NavbarProps) {
             {mobileMenuOpen && (
                 <div className="md:hidden border-t border-slate-100 bg-white p-4 space-y-4 shadow-xl dark:bg-slate-900 dark:border-slate-800">
                     {showSearch && (
-                        <form onSubmit={handleSubmit} className="relative">
-                            <input
-                                type="text"
-                                value={query}
-                                onChange={(e) => setQuery(e.target.value)}
-                                placeholder={t("nav.search.placeholder")}
-                                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100"
-                            />
-                            <button type="submit" className="absolute right-3 top-1/2 -translate-y-1/2 bg-slate-900 text-white p-1.5 rounded-lg dark:bg-slate-700">
-                                <Search size={14} />
-                            </button>
-                        </form>
+                        <SearchBar
+                            autoFocus
+                            placeholder={t("nav.search.placeholder")}
+                            onSelect={(symbol) => {
+                                setMobileMenuOpen(false);
+                                router.push(`/${symbol}`);
+                            }}
+                        />
                     )}
                     <Link
                         href="/portfolio"

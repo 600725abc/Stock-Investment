@@ -1,6 +1,19 @@
 import YahooFinance from "yahoo-finance2";
+import fs from "fs";
+import path from "path";
 
 const yahooFinance = new YahooFinance();
+
+// Load fallback symbols
+let FALLBACK_SYMBOLS: any[] = [];
+try {
+    const filePath = path.join(process.cwd(), "lib/data/symbols.json");
+    if (fs.existsSync(filePath)) {
+        FALLBACK_SYMBOLS = JSON.parse(fs.readFileSync(filePath, "utf-8"));
+    }
+} catch (error) {
+    console.error("Error loading fallback symbols:", error);
+}
 
 const CACHE: Record<string, { data: any, timestamp: number }> = {};
 const CACHE_TTL = 2 * 60 * 1000; // 2 minutes
@@ -37,6 +50,8 @@ export async function getYahooQuote(symbol: string) {
     } catch (error: unknown) {
         const message = error instanceof Error ? error.message : String(error);
         console.error(`Yahoo Quote Error for ${symbol}:`, message);
+
+        // Return minimal fallback if cached data is not available
         return null;
     }
 }
@@ -51,9 +66,9 @@ export async function getYahooChart(symbol: string, period1: Date, period2: Date
 
     try {
         const result = await yahooFinance.chart(symbol, {
-            period1,
-            period2,
-            interval
+            period1: period1,
+            period2: period2,
+            interval: interval
         });
 
         if (!result || !result.quotes || result.quotes.length === 0) {
@@ -116,29 +131,37 @@ export async function searchStocks(query: string) {
         return CACHE[cacheKey].data;
     }
 
+    let results: any[] = [];
     try {
-        const results = await yahooFinance.search(query, { quotesCount: 8 });
-
-        if (!results || !results.quotes) {
-            return [];
+        const searchResults = await yahooFinance.search(query, { quotesCount: 8 });
+        if (searchResults && searchResults.quotes) {
+            results = searchResults.quotes
+                .filter((q): q is typeof q & { symbol: string } => !!q.symbol)
+                .map((q) => ({
+                    symbol: q.symbol,
+                    name: q.longname || q.shortname || q.symbol,
+                    exchange: q.exchange || "",
+                    type: q.quoteType || ""
+                }));
         }
-
-        const data = results.quotes
-            .filter((q): q is typeof q & { symbol: string } => !!q.symbol)
-            .map((q) => ({
-                symbol: q.symbol,
-                name: q.longname || q.shortname || q.symbol,
-                exchange: q.exchange || "",
-                type: q.quoteType || ""
-            }));
-
-        CACHE[cacheKey] = { data, timestamp: now };
-        return data;
     } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : String(error);
-        console.error(`Yahoo Search Error:`, message);
-        return [];
+        console.error(`Yahoo Search Error (falling back):`, error instanceof Error ? error.message : String(error));
     }
+
+    // Fallback to local list if API fails or returns nothing
+    if (results.length === 0 && FALLBACK_SYMBOLS.length > 0) {
+        const lowerQuery = query.toLowerCase();
+        results = FALLBACK_SYMBOLS.filter(s =>
+            s.symbol.toLowerCase().includes(lowerQuery) ||
+            s.name.toLowerCase().includes(lowerQuery)
+        ).slice(0, 8);
+    }
+
+    if (results.length > 0) {
+        CACHE[cacheKey] = { data: results, timestamp: now };
+    }
+
+    return results;
 }
 
 function formatTimeLabel(date: Date | undefined, interval: string): string {

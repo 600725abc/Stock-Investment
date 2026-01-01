@@ -1,0 +1,122 @@
+[
+    {
+        "symbol": "AAPL",
+        "name": "Apple Inc.",
+        "exchange": "NASDAQ",
+        "type": "EQUITY"
+    },
+    {
+        "symbol": "MSFT",
+        "name": "Microsoft Corporation",
+        "exchange": "NASDAQ",
+        "type": "EQUITY"
+    },
+    {
+        "symbol": "GOOGL",
+        "name": "Alphabet Inc.",
+        "exchange": "NASDAQ",
+        "type": "EQUITY"
+    },
+    {
+        "symbol": "AMZN",
+        "name": "Amazon.com, Inc.",
+        "exchange": "NASDAQ",
+        "type": "EQUITY"
+    },
+    {
+        "symbol": "TSLA",
+        "name": "Tesla, Inc.",
+        "exchange": "NASDAQ",
+        "type": "EQUITY"
+    },
+    {
+        "symbol": "META",
+        "name": "Meta Platforms, Inc.",
+        "exchange": "NASDAQ",
+        "type": "EQUITY"
+    },
+    {
+        "symbol": "NVDA",
+        "name": "NVIDIA Corporation",
+        "exchange": "NASDAQ",
+        "type": "EQUITY"
+    },
+    {
+        "symbol": "BRK-B",
+        "name": "Berkshire Hathaway Inc.",
+        "exchange": "NYSE",
+        "type": "EQUITY"
+    },
+    {
+        "symbol": "V",
+        "name": "Visa Inc.",
+        "exchange": "NYSE",
+        "type": "EQUITY"
+    },
+    {
+        "symbol": "JPM",
+        "name": "JPMorgan Chase & Co.",
+        "exchange": "NYSE",
+        "type": "EQUITY"
+    },
+    {
+        "symbol": "TSM",
+        "name": "Taiwan Semiconductor Manufacturing Company Limited",
+        "exchange": "NYSE",
+        "type": "EQUITY"
+    },
+    {
+        "symbol": "2330.TW",
+        "name": "Taiwan Semiconductor Manufacturing Company Limited (TSMC)",
+        "exchange": "Taiwan",
+        "type": "EQUITY"
+    },
+    {
+        "symbol": "BTC-USD",
+        "name": "Bitcoin USD",
+        "exchange": "CCC",
+        "type": "CRYPTOCURRENCY"
+    },
+    {
+        "symbol": "ETH-USD",
+        "name": "Ethereum USD",
+        "exchange": "CCC",
+        "type": "CRYPTOCURRENCY"
+    },
+    {
+        "symbol": "NFLX",
+        "name": "Netflix, Inc.",
+        "exchange": "NASDAQ",
+        "type": "EQUITY"
+    },
+    {
+        "symbol": "DIS",
+        "name": "The Walt Disney Company",
+        "exchange": "NYSE",
+        "type": "EQUITY"
+    },
+    {
+        "symbol": "BABA",
+        "name": "Alibaba Group Holding Limited",
+        "exchange": "NYSE",
+        "type": "EQUITY"
+    },
+    {
+        "symbol": "PYPL",
+        "name": "PayPal Holdings, Inc.",
+        "exchange": "NASDAQ",
+        "type": "EQUITY"
+    },
+    {
+        "symbol": "INTC",
+        "name": "Intel Corporation",
+        "exchange": "NASDAQ",
+        "type": "EQUITY"
+    },
+    {
+        "symbol": "AMD",
+        "name": "Advanced Micro Devices, Inc.",
+        "exchange": "NASDAQ",
+        "type": "EQUITY"
+    }
+]
