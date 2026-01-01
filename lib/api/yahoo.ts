@@ -18,6 +18,43 @@ try {
 const CACHE: Record<string, { data: any, timestamp: number }> = {};
 const CACHE_TTL = 2 * 60 * 1000; // 2 minutes
 
+const FINNHUB_API_KEY = "d5b0tjpr01qh7ajjopk0d5b0tjpr01qh7ajjopkg";
+
+// Helper to convert symbols for Finnhub
+function convertToFinnhubSymbol(symbol: string): string {
+    // US stocks are same. Taiwan stocks usually 0050.TW
+    return symbol.toUpperCase();
+}
+
+async function getFinnhubQuote(symbol: string) {
+    const finnhubSymbol = convertToFinnhubSymbol(symbol);
+    const url = `https://finnhub.io/api/v1/quote?symbol=${finnhubSymbol}&token=${FINNHUB_API_KEY}`;
+
+    try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error("Finnhub API Error");
+        const data = await response.json();
+
+        // Finnhub returns 'c' for current price, 'd' for change, 'dp' for change percentage
+        // If 'c' is 0, it might be an invalid symbol or market closed with no data
+        if (!data.c) return null;
+
+        return {
+            price: data.c,
+            change: data.d,
+            changePercent: data.dp,
+            high: data.h,
+            low: data.l,
+            name: symbol, // Finnhub quote API doesn't return name, will be filled by fallback or caller
+            marketCap: "N/A", // Quote API doesn't have market cap
+            currency: symbol.includes(".TW") ? "TWD" : "USD"
+        };
+    } catch (error) {
+        console.error("Finnhub Fetch Error:", error);
+        return null;
+    }
+}
+
 export async function getYahooQuote(symbol: string) {
     const cacheKey = `quote_${symbol}`;
     const now = Date.now();
@@ -26,32 +63,50 @@ export async function getYahooQuote(symbol: string) {
         return CACHE[cacheKey].data;
     }
 
-    try {
-        const quote = await yahooFinance.quote(symbol);
+    // --- STRATEGY: Try Finnhub First for Price, then Yahoo for Details ---
+    let finalData: any = null;
 
-        if (!quote) {
-            console.warn(`No quote found for ${symbol}`);
-            return null;
+    try {
+        // 1. Try to get price from Finnhub (Very Reliable)
+        const fhQuote = await getFinnhubQuote(symbol);
+
+        // 2. Try to get metadata (Name, Market Cap) from Yahoo
+        let yQuote = null;
+        try {
+            yQuote = await yahooFinance.quote(symbol);
+        } catch (e) {
+            console.error("Yahoo Metadata Error:", e);
         }
 
-        const data = {
-            price: quote.regularMarketPrice,
-            change: quote.regularMarketChange,
-            changePercent: quote.regularMarketChangePercent,
-            high: quote.regularMarketDayHigh,
-            low: quote.regularMarketDayLow,
-            name: quote.longName || quote.shortName || symbol,
-            marketCap: formatMarketCap(quote.marketCap),
-            currency: quote.currency || "USD"
-        };
+        if (fhQuote) {
+            finalData = {
+                ...fhQuote,
+                name: yQuote?.longName || yQuote?.shortName || symbol,
+                marketCap: formatMarketCap(yQuote?.marketCap),
+                currency: yQuote?.currency || fhQuote.currency
+            };
+        } else if (yQuote) {
+            // Fallback to pure Yahoo if Finnhub failed
+            finalData = {
+                price: yQuote.regularMarketPrice,
+                change: yQuote.regularMarketChange,
+                changePercent: yQuote.regularMarketChangePercent,
+                high: yQuote.regularMarketDayHigh,
+                low: yQuote.regularMarketDayLow,
+                name: yQuote.longName || yQuote.shortName || symbol,
+                marketCap: formatMarketCap(yQuote.marketCap),
+                currency: yQuote.currency || "USD"
+            };
+        }
 
-        CACHE[cacheKey] = { data, timestamp: now };
-        return data;
+        if (finalData) {
+            CACHE[cacheKey] = { data: finalData, timestamp: now };
+            return finalData;
+        }
+
+        return null;
     } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : String(error);
-        console.error(`Yahoo Quote Error for ${symbol}:`, message);
-
-        // Return minimal fallback if cached data is not available
+        console.error(`Global Quote Error for ${symbol}:`, error);
         return null;
     }
 }
