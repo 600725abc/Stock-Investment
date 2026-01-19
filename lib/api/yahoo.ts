@@ -1,8 +1,8 @@
-import YahooFinance from "yahoo-finance2";
+import yahooFinance from "yahoo-finance2";
 import fs from "fs";
 import path from "path";
 
-const yahooFinance = new YahooFinance();
+// yahoo-finance2 v3+ exports the singleton as the default export
 
 // Load fallback symbols
 let FALLBACK_SYMBOLS: any[] = [];
