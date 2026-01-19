@@ -18,11 +18,19 @@ try {
 const CACHE: Record<string, { data: any, timestamp: number }> = {};
 const CACHE_TTL = 2 * 60 * 1000; // 2 minutes
 
-const FINNHUB_API_KEY = "d5b0tjpr01qh7ajjopk0d5b0tjpr01qh7ajjopkg";
+const FINNHUB_API_KEY = process.env.FINNHUB_API_KEY;
 
-// Helper to convert symbols for Finnhub
+// Helper to detect market type
+function getMarketType(symbol: string): 'US' | 'TW' | 'CRYPTO' | 'OTHER' {
+    const upperSymbol = symbol.toUpperCase();
+    if (upperSymbol.endsWith('.TW')) return 'TW';
+    if (upperSymbol.includes('-USD')) return 'CRYPTO';
+    if (/^[A-Z]{1,5}$/.test(upperSymbol)) return 'US'; // Simple US stock pattern
+    return 'OTHER';
+}
+
+// Helper to convert symbols for Finnhub (only used for US stocks)
 function convertToFinnhubSymbol(symbol: string): string {
-    // US stocks are same. Taiwan stocks usually 0050.TW
     return symbol.toUpperCase();
 }
 
@@ -45,12 +53,33 @@ async function getFinnhubQuote(symbol: string) {
             changePercent: data.dp,
             high: data.h,
             low: data.l,
-            name: symbol, // Finnhub quote API doesn't return name, will be filled by fallback or caller
-            marketCap: "N/A", // Quote API doesn't have market cap
-            currency: symbol.includes(".TW") ? "TWD" : "USD"
+            name: symbol, // Will be filled by Yahoo metadata
+            marketCap: "N/A",
+            currency: "USD"
         };
     } catch (error) {
         console.error("Finnhub Fetch Error:", error);
+        return null;
+    }
+}
+
+async function getYahooQuoteData(symbol: string) {
+    try {
+        const quote = await yahooFinance.quote(symbol);
+        if (!quote) return null;
+
+        return {
+            price: quote.regularMarketPrice,
+            change: quote.regularMarketChange,
+            changePercent: quote.regularMarketChangePercent,
+            high: quote.regularMarketDayHigh,
+            low: quote.regularMarketDayLow,
+            name: quote.longName || quote.shortName || symbol,
+            marketCap: formatMarketCap(quote.marketCap),
+            currency: quote.currency || "USD"
+        };
+    } catch (error) {
+        console.error("Yahoo Quote Error:", error);
         return null;
     }
 }
@@ -63,40 +92,39 @@ export async function getYahooQuote(symbol: string) {
         return CACHE[cacheKey].data;
     }
 
-    // --- STRATEGY: Try Finnhub First for Price, then Yahoo for Details ---
+    const marketType = getMarketType(symbol);
     let finalData: any = null;
 
     try {
-        // 1. Try to get price from Finnhub (Very Reliable)
-        const fhQuote = await getFinnhubQuote(symbol);
+        if (marketType === 'US') {
+            // --- US STOCKS: Try Finnhub first (more reliable), fallback to Yahoo ---
+            const fhQuote = await getFinnhubQuote(symbol);
 
-        // 2. Try to get metadata (Name, Market Cap) from Yahoo
-        let yQuote = null;
-        try {
-            yQuote = await yahooFinance.quote(symbol);
-        } catch (e) {
-            console.error("Yahoo Metadata Error:", e);
-        }
-
-        if (fhQuote) {
-            finalData = {
-                ...fhQuote,
-                name: yQuote?.longName || yQuote?.shortName || symbol,
-                marketCap: formatMarketCap(yQuote?.marketCap),
-                currency: yQuote?.currency || fhQuote.currency
-            };
-        } else if (yQuote) {
-            // Fallback to pure Yahoo if Finnhub failed
-            finalData = {
-                price: yQuote.regularMarketPrice,
-                change: yQuote.regularMarketChange,
-                changePercent: yQuote.regularMarketChangePercent,
-                high: yQuote.regularMarketDayHigh,
-                low: yQuote.regularMarketDayLow,
-                name: yQuote.longName || yQuote.shortName || symbol,
-                marketCap: formatMarketCap(yQuote.marketCap),
-                currency: yQuote.currency || "USD"
-            };
+            if (fhQuote) {
+                // Got price from Finnhub, try to enrich with Yahoo metadata
+                try {
+                    const yQuote = await yahooFinance.quote(symbol);
+                    if (yQuote) {
+                        finalData = {
+                            ...fhQuote,
+                            name: yQuote.longName || yQuote.shortName || symbol,
+                            marketCap: formatMarketCap(yQuote.marketCap),
+                            currency: yQuote.currency || "USD"
+                        };
+                    } else {
+                        finalData = fhQuote;
+                    }
+                } catch (e) {
+                    // Yahoo metadata failed, use Finnhub data as-is
+                    finalData = fhQuote;
+                }
+            } else {
+                // Finnhub failed, fallback to pure Yahoo
+                finalData = await getYahooQuoteData(symbol);
+            }
+        } else {
+            // --- TAIWAN/CRYPTO/OTHER: Use Yahoo Finance directly ---
+            finalData = await getYahooQuoteData(symbol);
         }
 
         if (finalData) {
@@ -119,6 +147,87 @@ export async function getYahooChart(symbol: string, period1: Date, period2: Date
         return CACHE[cacheKey].data;
     }
 
+    const marketType = getMarketType(symbol);
+    let chartData: any[] | null = null;
+
+    try {
+        if (marketType === 'US') {
+            // --- US STOCKS: Try Finnhub for historical data ---
+            console.log(`[CHART] Attempting Finnhub for US stock: ${symbol}`);
+            chartData = await getFinnhubChart(symbol, period1, period2, interval);
+
+            if (chartData && chartData.length > 0) {
+                console.log(`[CHART] Finnhub success for ${symbol}: ${chartData.length} data points`);
+            } else {
+                console.log(`[CHART] Finnhub returned no data for ${symbol}, falling back to Yahoo`);
+                chartData = await getYahooChartData(symbol, period1, period2, interval);
+            }
+        } else {
+            // --- TAIWAN/CRYPTO/OTHER: Use Yahoo directly ---
+            console.log(`[CHART] Using Yahoo for non-US stock: ${symbol} (type: ${marketType})`);
+            chartData = await getYahooChartData(symbol, period1, period2, interval);
+        }
+
+        if (chartData && chartData.length > 0) {
+            CACHE[cacheKey] = { data: chartData, timestamp: now };
+            return chartData;
+        }
+
+        console.error(`[CHART] No valid chart data for ${symbol}`);
+        return null;
+    } catch (error: unknown) {
+        console.error(`[CHART] Chart Error for ${symbol}:`, error);
+        return null;
+    }
+}
+
+async function getFinnhubChart(symbol: string, period1: Date, period2: Date, interval: "1d" | "1wk" | "1mo" | "5m" | "1h") {
+    // Map our intervals to Finnhub's resolution format
+    const resolutionMap: Record<string, string> = {
+        "5m": "5",
+        "1h": "60",
+        "1d": "D",
+        "1wk": "W",
+        "1mo": "M"
+    };
+
+    const resolution = resolutionMap[interval] || "D";
+    const from = Math.floor(period1.getTime() / 1000);
+    const to = Math.floor(period2.getTime() / 1000);
+    const url = `https://finnhub.io/api/v1/stock/candle?symbol=${symbol}&resolution=${resolution}&from=${from}&to=${to}&token=${FINNHUB_API_KEY}`;
+
+    console.log(`[FINNHUB] Requesting: ${symbol}, resolution: ${resolution}, from: ${new Date(from * 1000).toISOString()}, to: ${new Date(to * 1000).toISOString()}`);
+
+    try {
+        const response = await fetch(url);
+        if (!response.ok) {
+            console.error(`[FINNHUB] HTTP Error: ${response.status} ${response.statusText}`);
+            throw new Error("Finnhub Chart API Error");
+        }
+        const data = await response.json();
+
+        console.log(`[FINNHUB] Response status: ${data.s}, data points: ${data.t?.length || 0}`);
+
+        // Finnhub returns arrays: t (timestamps), c (close prices), o, h, l, v
+        if (data.s === 'no_data' || !data.t || !data.c) {
+            console.log(`[FINNHUB] No data available: status=${data.s}`);
+            return null;
+        }
+
+        const chartData = data.t.map((timestamp: number, index: number) => ({
+            time: formatTimeLabel(new Date(timestamp * 1000), interval),
+            price: data.c[index]
+        })).filter((item: any) => item.price !== null && item.price !== undefined);
+
+        console.log(`[FINNHUB] Successfully processed ${chartData.length} data points`);
+        return chartData;
+    } catch (error) {
+        console.error("[FINNHUB] Chart Fetch Error:", error);
+        return null;
+    }
+}
+
+async function getYahooChartData(symbol: string, period1: Date, period2: Date, interval: "1d" | "1wk" | "1mo" | "5m" | "1h") {
     try {
         const result = await yahooFinance.chart(symbol, {
             period1: period1,
@@ -135,7 +244,6 @@ export async function getYahooChart(symbol: string, period1: Date, period2: Date
             price: q.close
         })).filter((q) => q.price !== null && q.price !== undefined);
 
-        CACHE[cacheKey] = { data, timestamp: now };
         return data;
     } catch (error: unknown) {
         const message = error instanceof Error ? error.message : String(error);
@@ -196,7 +304,8 @@ export async function searchStocks(query: string) {
                     symbol: q.symbol,
                     name: q.longname || q.shortname || q.symbol,
                     exchange: q.exchange || "",
-                    type: q.quoteType || ""
+                    type: q.quoteType || "",
+                    currency: q.currency || q.financialCurrency || ""
                 }));
         }
     } catch (error: unknown) {

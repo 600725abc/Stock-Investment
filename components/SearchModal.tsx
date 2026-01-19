@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Search, X, TrendingUp } from "lucide-react";
+import { Search, X, TrendingUp, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 interface SearchModalProps {
@@ -9,13 +9,21 @@ interface SearchModalProps {
     onClose: () => void;
 }
 
-const POPULAR_STOCKS = [
-    { symbol: "AAPL", name: "Apple Inc." },
-    { symbol: "TSLA", name: "Tesla, Inc." },
-    { symbol: "NVDA", name: "NVIDIA Corporation" },
-    { symbol: "MSFT", name: "Microsoft Corporation" },
-    { symbol: "AMZN", name: "Amazon.com, Inc." },
-    { symbol: "GOOGL", name: "Alphabet Inc." },
+interface Stock {
+    symbol: string;
+    name: string;
+    exchange?: string;
+    currency?: string;
+    type?: string;
+}
+
+const POPULAR_STOCKS: Stock[] = [
+    { symbol: "AAPL", name: "Apple Inc.", exchange: "NASDAQ", currency: "USD" },
+    { symbol: "TSLA", name: "Tesla, Inc.", exchange: "NASDAQ", currency: "USD" },
+    { symbol: "NVDA", name: "NVIDIA Corporation", exchange: "NASDAQ", currency: "USD" },
+    { symbol: "MSFT", name: "Microsoft Corporation", exchange: "NASDAQ", currency: "USD" },
+    { symbol: "AMZN", name: "Amazon.com, Inc.", exchange: "NASDAQ", currency: "USD" },
+    { symbol: "GOOGL", name: "Alphabet Inc.", exchange: "NASDAQ", currency: "USD" },
 ];
 
 export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
@@ -24,12 +32,34 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
     const router = useRouter();
     const inputRef = useRef<HTMLInputElement>(null);
 
-    const filteredStocks = query.trim() === ""
-        ? POPULAR_STOCKS
-        : POPULAR_STOCKS.filter(s =>
-            s.symbol.toLowerCase().includes(query.toLowerCase()) ||
-            s.name.toLowerCase().includes(query.toLowerCase())
-        );
+    const [results, setResults] = useState<Stock[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
+
+    useEffect(() => {
+        if (query.trim().length < 1) {
+            setResults([]);
+            return;
+        }
+
+        const timer = setTimeout(async () => {
+            setIsLoading(true);
+            try {
+                const response = await fetch(`/api/stock/search?q=${encodeURIComponent(query)}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    setResults(data);
+                }
+            } catch (error) {
+                console.error("Search error:", error);
+            } finally {
+                setIsLoading(false);
+            }
+        }, 300);
+
+        return () => clearTimeout(timer);
+    }, [query]);
+
+    const displayStocks = query.trim() === "" ? POPULAR_STOCKS : results;
 
     useEffect(() => {
         if (isOpen) {
@@ -102,10 +132,11 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
                 <div className="max-h-[60vh] overflow-y-auto p-2">
                     {filteredStocks.length > 0 ? (
                         <div className="space-y-1">
-                            <p className="px-3 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                                {query.trim() === "" ? "Popular Stocks" : "Search Results"}
+                            <p className="px-3 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest flex items-center justify-between">
+                                <span>{query.trim() === "" ? "Popular Stocks" : "Search Results"}</span>
+                                {isLoading && <Loader2 className="w-3 h-3 animate-spin" />}
                             </p>
-                            {filteredStocks.map((stock, index) => (
+                            {displayStocks.map((stock, index) => (
                                 <button
                                     key={stock.symbol}
                                     onClick={() => handleSelect(stock.symbol)}
@@ -118,8 +149,23 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
                                             <span className="text-xs font-bold text-white">{stock.symbol.slice(0, 2)}</span>
                                         </div>
                                         <div className="text-left">
-                                            <div className="font-bold text-sm">{stock.symbol}</div>
-                                            <div className="text-xs text-slate-500">{stock.name}</div>
+                                            <div className="font-bold text-sm tracking-tight flex items-center">
+                                                {stock.symbol}
+                                                {stock.currency && (
+                                                    <span className="ml-2 text-[10px] text-slate-500 font-medium">
+                                                        {stock.currency}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <div className="text-xs text-slate-500 flex items-center truncate max-w-[200px]">
+                                                {stock.name}
+                                                {stock.exchange && (
+                                                    <>
+                                                        <span className="mx-1.5 opacity-30">•</span>
+                                                        <span className="text-[10px] uppercase opacity-60 tracking-wider font-semibold">{stock.exchange}</span>
+                                                    </>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                     {index === selectedIndex && (

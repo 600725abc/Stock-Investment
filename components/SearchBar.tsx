@@ -10,6 +10,7 @@ interface SearchResult {
     name: string;
     exchange: string;
     type: string;
+    currency?: string;
 }
 
 interface SearchBarProps {
@@ -169,6 +170,7 @@ export default function SearchBar({ placeholder, className = "", onSelect, autoF
                                         {result.name} ({result.symbol})
                                     </span>
                                     <span className="text-[10px] font-bold px-1.5 py-0.5 bg-slate-100 text-slate-500 rounded border border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700">
+                                        {result.currency && <span className="mr-1 opacity-70">{result.currency}</span>}
                                         {result.exchange}
                                     </span>
                                 </div>
